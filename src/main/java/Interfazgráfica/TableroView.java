@@ -19,7 +19,7 @@ public class TableroView extends GridPane{
                 boton.setPrefSize(50, 50);
 
                 // Color o texto en función del modificador o coste
-                String texto = "M" + casilla.getCosteMovimiento() + "\nD" + casilla.getModificadorDefensa();
+                String texto =  "D" + casilla.getModificadorDefensa();
                 boton.setText(texto);
 
                 if (casilla.getModificadorDefensa() > 0) {
