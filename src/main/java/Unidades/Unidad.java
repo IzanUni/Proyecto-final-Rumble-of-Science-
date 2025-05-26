@@ -24,6 +24,12 @@ public abstract class Unidad {
         this.columna = columna;
         this.rangomovimiento = rangomovimiento;
     }
+    public int getAtaque() {
+        return ataque;
+    }
+    public int getDefensa() {
+        return defensa;
+    }
 
     public abstract String getTipo();
 
