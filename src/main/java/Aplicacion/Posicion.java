@@ -1,6 +1,5 @@
 package Aplicacion;
 
-import java.util.Objects;
 
 public class Posicion {
     private int fila;
@@ -9,11 +8,6 @@ public class Posicion {
     public Posicion(int fila, int columna){
         this.fila = fila;
         this.columna = columna;
-    }
-
-    public boolean mismaPosicion(Posicion otra){
-        if(otra == null) return false;
-        return this.fila == otra.fila && this.columna == otra.columna;
     }
 
     public int getFila() {return this.fila;}
@@ -29,6 +23,6 @@ public class Posicion {
 
     @Override
     public int hashCode() {
-        return Objects.hash(fila, columna);
+        return 31 + fila + columna;
     }
 }
