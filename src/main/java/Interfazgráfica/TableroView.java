@@ -5,8 +5,6 @@ import Unidades.Unidad;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.layout.GridPane;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
 import Tablero.Tablero;
 import Tablero.Casilla;
 import Material.ListaSE;

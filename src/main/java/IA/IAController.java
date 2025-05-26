@@ -41,11 +41,9 @@ public class IAController {
         int tf = mejorTarget.getFila(), tc = mejorTarget.getColumna();
         Casilla dest = tablero.getCasilla(tf, tc);
 
-        // Si puede atacar
         if (mejorU.puedeAtacarA(tf, tc)) {
             mejorU.atacar(tablero, tf, tc);
         } else {
-            // Mover un paso Chebyshev hacia target
             int df = Integer.signum(tf - mejorU.getFila());
             int dc = Integer.signum(tc - mejorU.getColumna());
             int nf = mejorU.getFila() + df;

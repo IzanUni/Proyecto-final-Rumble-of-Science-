@@ -4,7 +4,7 @@ public class Casilla {
     private int modificadorDefensa;
     private Unidad unidad;
 
-    public Casilla(int modificadorDefensa, int modificadorAtaque) {
+    public Casilla(int modificadorDefensa) {
         this.modificadorDefensa = modificadorDefensa;
         this.unidad = null;
     }

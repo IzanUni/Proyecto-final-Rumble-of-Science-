@@ -16,8 +16,7 @@ public class Tablero {
         for(int i=0; i<filas;i++){
             for(int j=0; j<columnas; j++){
                 int defensa = -1 + (int) (Math.random() * 3);
-                int ataque = -1 + (int) (Math.random() * 3);
-                casillas[i][j] = new Casilla(defensa, ataque);
+                casillas[i][j] = new Casilla(defensa);
             }
         }
     }

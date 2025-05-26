@@ -46,18 +46,11 @@ public abstract class Unidad {
         }
     }
 
-    public void recibirHp(int heal){
-        if (heal > 0){
-            hp += heal;
-        }
-    }
 
     public boolean estaViva() {
         return hp > 0;
     }
 
-    public int getRangomovimiento(){return rangomovimiento;}
-    public int getRangoataque(){return rangoataque;}
 
     public int getFila(){
         return fila;
