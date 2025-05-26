@@ -5,7 +5,7 @@ import Tablero.Tablero;
 
 public class Poeta extends Unidad{
     public Poeta(boolean esJugadorHumano) {
-        super("Poeta", 5, 2, 1, 2,1, 10,5, esJugadorHumano );
+        super("Poeta", 7, 5, 1, 2,1, 10,5, esJugadorHumano );
     }
 
     @Override

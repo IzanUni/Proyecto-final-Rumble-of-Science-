@@ -3,11 +3,8 @@ import Excepciones.SameFaccion;
 import Material.IteradorSE;
 import Tablero.Tablero;
 
-import java.util.HashSet;
 import java.util.Random;
-import java.util.Set;
 
-import Tablero.Tablero;
 import Unidades.*;
 import Material.ListaSE;
 
@@ -29,6 +26,7 @@ public class Partida {
         this.spawnInterval = spawnInterval;
     }
 
+
     public void iniciarPartida() {
         colocarIniciales(jugador1,
                 new Posicion(0, 0),
@@ -48,6 +46,13 @@ public class Partida {
             u.setPosicion(pos.getFila(), pos.getColumna());
             jugador.addUnidad(u);
         }
+    }
+
+    public Jugador getJugador1(){
+        return this.jugador1;
+    }
+    public Jugador getJugador2(){
+        return this.jugador2;
     }
 
     private Unidad generarUnidadAleatoria(Jugador jugador) {

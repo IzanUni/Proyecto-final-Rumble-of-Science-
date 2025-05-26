@@ -3,7 +3,7 @@ package Unidades;
 public class Matematico extends Unidad{
 
     public Matematico(boolean esJugadorHumano){
-        super("Matematico", 10,1, 2, 1,1, 2, 5, esJugadorHumano);
+        super("Matematico", 10,3, 2, 1,1, 2, 5, esJugadorHumano);
     }
     @Override
     public String getTipo() {

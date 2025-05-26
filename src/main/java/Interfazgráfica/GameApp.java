@@ -5,23 +5,27 @@ import Aplicacion.Jugador;
 import Aplicacion.Partida;
 import Aplicacion.Posicion;
 import Material.ListaSE;
-import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.layout.BorderPane;
-import javafx.stage.Stage;
+import Material.IteradorSE;
 import Tablero.Tablero;
+import Tablero.Casilla;
 import Unidades.Unidad;
 import Unidades.Ingeniero;
 import Unidades.Matematico;
 import Unidades.Poeta;
 import Unidades.Filosofo;
-import javafx.scene.control.Button;
-import javafx.scene.layout.HBox;
-import java.awt.*;
-import java.util.Random;
+import javafx.application.Application;
 import javafx.geometry.Insets;
-import Tablero.Casilla;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import java.util.Random;
 
 
 public class GameApp extends Application {
@@ -29,6 +33,8 @@ public class GameApp extends Application {
     private Partida partida;
     private TableroView tableroView;
     private Unidad spawnPendiente;
+    private ListaSE<Posicion> spawnPositions = new ListaSE<>();
+    private boolean spawnPhase = false;
     private Unidad selectedUnit;
     private boolean actionDone;
     private ActionMode actionMode = ActionMode.NONE;
@@ -40,6 +46,7 @@ public class GameApp extends Application {
     private Button attackBtn;
     private Button nextTurnBtn;
     private enum ActionMode { NONE, MOVE, ATTACK }
+    private VBox sidePanel;
 
     @Override
     public void start(Stage primaryStage) {
@@ -63,115 +70,173 @@ public class GameApp extends Application {
         moveBtn.setDisable(true);
         attackBtn.setDisable(true);
 
-        moveBtn.setOnAction(e -> {
-            actionMode = ActionMode.MOVE;
-            if (selectedUnit != null) {
-                ListaSE<Posicion> moves = getMovimientoPosiciones(selectedUnit);
-                tableroView.limpiarResaltados();
-                tableroView.resaltar(moves);
-            }
-        });
-        attackBtn.setOnAction(e -> {
-            actionMode = ActionMode.ATTACK;
-            if (selectedUnit != null) {
-                ListaSE<Posicion> atks = getAtaquePosiciones(selectedUnit);
-                tableroView.limpiarResaltados();
-                tableroView.resaltar(atks);
-            }
-        });
-        nextTurnBtn.setOnAction(e->handleNextTurn());
+        moveBtn.setOnAction(e -> activateMoveMode());
+        attackBtn.setOnAction(e -> activateAttackMode());
+        nextTurnBtn.setOnAction(e -> handleNextTurn());
 
-        HBox actionBox = new HBox(10, moveBtn, attackBtn);
+
+        HBox actionBox = new HBox(10, moveBtn, attackBtn, nextTurnBtn);
         actionBox.setPadding(new Insets(5,5,5,5));
-        HBox controls = new HBox(10, actionBox, nextTurnBtn);
-        controls.setPadding(new Insets(5,5,5,5));
+        sidePanel = new VBox(10);
+        sidePanel.setPadding(new Insets(5));
+        sidePanel.getChildren().add(new Label("-- Unidades --"));
+        ScrollPane scroll = new ScrollPane(sidePanel);
+        scroll.setFitToWidth(true);
+        scroll.setPrefWidth(200);
         BorderPane root = new BorderPane();
         root.setCenter(tableroView);
-        root.setBottom(controls);
+        root.setBottom(actionBox);
+        root.setRight(scroll);
 
-        Scene scene = new Scene(root,600,700);
+        Scene scene = new Scene(root,800,700);
         primaryStage.setTitle("Rumble of Science");
         primaryStage.setScene(scene);
         primaryStage.show();
+        updateSidePanel();
         handleNextTurn();
-
+    }
+    private void updateSidePanel(){
+        sidePanel.getChildren().clear();
+        sidePanel.getChildren().add(new Label("-- Jugador 1 (Números) --"));
+        nombreUnidades(partida.getJugador1(), sidePanel);
+        sidePanel.getChildren().add(new Label("-- Jugador 2 (Letras) --"));
+        nombreUnidades(partida.getJugador2(), sidePanel);
+    }
+    private void nombreUnidades(Jugador j, VBox panel){
+        IteradorSE<Unidad> it = j.getUnidades().getIterador();
+        while (it.hasNext()) {
+            Unidad u = it.next();
+            Label lbl = new Label(u.getTipo() + " @ ("+u.getFila()+","+u.getColumna()+")");
+            panel.getChildren().add(lbl);
+        }
     }
     private void handleNextTurn() {
-        actionDone = false;
-        selectedUnit = null;
-        spawnPendiente = null;
-        actionMode = ActionMode.NONE;
+        if (spawnPhase) {
+            spawnPhase = false;
+            partida.nextTurn();
+            tablasActualizar();
+            return;
+        }
+
+        actionDone     = false;
+        selectedUnit   = null;
+        actionMode     = ActionMode.NONE;
         moveBtn.setDisable(true);
         attackBtn.setDisable(true);
+        spawnPendiente = null;
+        spawnPositions = new ListaSE<>();
         tableroView.limpiarResaltados();
+
         partida.nextTurn();
+        tablasActualizar();
 
-        if(partida.getTurno() % spawnInterval == 0){
+        int total = countUnits();
+        if (partida.getTurno() % spawnInterval == 0 && total < 8) {
             Jugador actual = partida.getJugadorActual();
-            boolean tipoUnidad = rnd.nextBoolean();
-            if (actual.getFaccion() == Faccion.NUMEROS) {
-                spawnPendiente = tipoUnidad
-                        ? new Ingeniero(actual.esHumano())
-                        : new Matematico(actual.esHumano());
-            }
-            else{
-                spawnPendiente = tipoUnidad
-                        ? new Poeta(actual.esHumano())
-                        : new Filosofo(actual.esHumano());
-            }
-            ListaSE<Posicion> libres = getMovimientoPosiciones(spawnPendiente);
-            tableroView.refrescar();
+            spawnPendiente = generarUnidadActual(actual);
+            spawnPositions = partida.getPosicionesAdyacentesLibres(actual);
+            tableroView.resaltar(spawnPositions);
+
+            new Alert(AlertType.INFORMATION,
+                    "Spawn: nueva unidad " + spawnPendiente.getTipo() +
+                            ".\nHaz clic en casilla resaltada para colocarla.")
+                    .showAndWait();
+            spawnPhase = true;
         }
-        tableroView.refrescar();
+    }
+    private Unidad generarUnidadActual(Jugador j) {
+        boolean t = rnd.nextBoolean();
+        if (j.getFaccion()==Faccion.NUMEROS) return t
+                ? new Ingeniero(j.esHumano())
+                : new Matematico(j.esHumano());
+        else return t
+                ? new Poeta(j.esHumano())
+                : new Filosofo(j.esHumano());
     }
 
-    private void handleCellClick(int fila, int columna) {
-        if (actionDone && spawnPendiente == null) {
-            Alert info = new Alert(Alert.AlertType.INFORMATION);
-            info.setHeaderText(null);
-            info.setContentText("Ya has realizado tu acción. Pulsa 'Siguiente Turno'.");
-            info.showAndWait();
-            return;
-        }
-        if(spawnPendiente != null){
-            Posicion pos = new Posicion(fila, columna);
-            if (partida.colocarUnidadNueva(partida.getJugadorActual(), spawnPendiente, pos)) {
-                spawnPendiente = null;
-                actionDone = true;
-                tableroView.limpiarResaltados();
-                tableroView.refrescar();
-            }
-            return;
-        }
-        Casilla cas = tablero.getCasilla(fila, columna);
+    private void handleCellClick(int f, int c) {
+        if (actionDone && spawnPendiente == null) return;
+
+        Casilla cas = tablero.getCasilla(f, c);
         Jugador actual = partida.getJugadorActual();
-        if(selectedUnit == null){
-            if (cas.estaOcupada() && cas.getUnidad().esJugadorHumano() == actual.esHumano()) {
-                selectedUnit = cas.getUnidad();
-                showStats(selectedUnit);
-                ListaSE<Posicion> moves = getMovimientoPosiciones(selectedUnit);
-                ListaSE<Posicion> attacks = getAtaquePosiciones(selectedUnit);
-                tableroView.resaltar(moves);
-                tableroView.resaltar(attacks);
+
+        if (spawnPendiente != null) {
+            Posicion p = new Posicion(f, c);
+            if (contains(spawnPositions, p)
+                    && partida.colocarUnidadNueva(actual, spawnPendiente, p)) {
+                actionDone     = true;
+                spawnPendiente = null;
+                tablasActualizar();
             }
             return;
         }
-        if (cas.estaOcupada() && cas.getUnidad().esJugadorHumano() != selectedUnit.esJugadorHumano()) {
-            if (selectedUnit.puedeAtacarA(fila, columna)) {
-                selectedUnit.atacar(tablero, fila, columna);
-                actionDone = true;
-            }
-        } else {
-            if (!cas.estaOcupada() && selectedUnit.puedeMoverA(fila, columna)) {
-                selectedUnit.mover(tablero, fila, columna);
-                actionDone = true;
-            }
+
+        if (cas.estaOcupada()) {
+            showStats(cas.getUnidad());
         }
-        selectedUnit = null;
-        tableroView.limpiarResaltados();
-        tableroView.refrescar();
+
+        if (selectedUnit == null
+                && cas.estaOcupada()
+                && cas.getUnidad().esJugadorHumano() == actual.esHumano()) {
+            selectedUnit = cas.getUnidad();
+            moveBtn.setDisable(false);
+            attackBtn.setDisable(false);
+            return;
+        }
+
+        if (selectedUnit != null) {
+            if (actionMode == ActionMode.ATTACK
+                    && cas.estaOcupada()
+                    && cas.getUnidad().esJugadorHumano() != selectedUnit.esJugadorHumano()
+                    && selectedUnit.puedeAtacarA(f, c)) {
+                showStats(cas.getUnidad());
+                selectedUnit.atacar(tablero, f, c);
+                actionDone = true;
+                tablasActualizar();
+            }
+            else if (actionMode == ActionMode.MOVE
+                    && !cas.estaOcupada()
+                    && selectedUnit.puedeMoverA(f, c)) {
+                selectedUnit.mover(tablero, f, c);
+                actionDone = true;
+                tablasActualizar();
+            }
+            selectedUnit = null;
+            actionMode   = ActionMode.NONE;
+            moveBtn.setDisable(true);
+            attackBtn.setDisable(true);
+        }
     }
 
+    private boolean contains(ListaSE<Posicion> list, Posicion p) {
+        IteradorSE<Posicion> it = list.getIterador();
+        while(it.hasNext()) if (it.next().equals(p)) return true;
+        return false;
+    }
+
+    private int countUnits() {
+        return partida.getJugador1()
+                .getUnidades()
+                .getNumElementos()
+                +   partida.getJugador2()
+                .getUnidades()
+                .getNumElementos();
+    }
+
+    private void tablasActualizar() {
+        tableroView.refrescar();
+        updateSidePanel();
+    }
+
+    private void activateMoveMode() {
+        actionMode=ActionMode.MOVE;
+        if (selectedUnit!=null) tableroView.resaltar(getMovimientoPosiciones(selectedUnit));
+    }
+
+    private void activateAttackMode() {
+        actionMode=ActionMode.ATTACK;
+        if (selectedUnit!=null) tableroView.resaltar(getAtaquePosiciones(selectedUnit));
+    }
 
     private ListaSE<Posicion> getMovimientoPosiciones(Unidad unidad) {
         ListaSE<Posicion> res = new ListaSE<>();
