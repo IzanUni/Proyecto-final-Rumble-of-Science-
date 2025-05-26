@@ -14,7 +14,7 @@ import Material.ListaSE;
 public class Partida {
     private final Tablero tablero;
     private final Jugador jugador1, jugador2;
-    private Jugador jugadoractual;
+    private Jugador jugadorActual;
     private int turno = 0;
     private final int spawnInterval;
     private final Random random = new Random();
@@ -30,10 +30,18 @@ public class Partida {
     }
 
     public void iniciarPartida() {
-
+        colocarIniciales(jugador1,
+                new Posicion(0, 0),
+                new Posicion(tablero.getFilas() - 1, 0)
+        );
+        colocarIniciales(jugador2,
+                new Posicion(0, tablero.getColumnas() - 1),
+                new Posicion(tablero.getFilas() - 1, tablero.getColumnas() - 1)
+        );
+        jugadorActual = jugador1;
     }
 
-    private void colocarIniciales(Jugador jugador, Posicion[] esquinas) {
+    private void colocarIniciales(Jugador jugador, Posicion... esquinas) {
         for (Posicion pos : esquinas) {
             Unidad u = generarUnidadAleatoria(jugador);
             tablero.colocarUnidad(u, pos.getFila(), pos.getColumna());
@@ -64,15 +72,40 @@ public class Partida {
 
     public void nextTurn() {
         turno++;
-        jugadoractual = (turno % 2 == 1) ? jugador2 : jugador1;
+        jugadorActual = (turno % 2 == 1) ? jugador2 : jugador1;
         if (turno % spawnInterval == 0) {
-            Unidad nueva = generarUnidadAleatoria(jugadoractual);
-            ListaSE<Posicion> libres = getPosicionesAdyacentesLibres(jugadoractual);
+            Unidad nueva = generarUnidadAleatoria(jugadorActual);
+            ListaSE<Posicion> libres = getPosicionesAdyacentesLibres(jugadorActual);
         }
 
     }
+    public int getTurno() {
+        return turno;
+    }
 
-    private ListaSE<Posicion> getPosicionesAdyacentesLibres(Jugador jugador) {
+    public Jugador getJugadorActual() {
+        return jugadorActual;
+    }
+
+    public boolean colocarUnidadNueva(Jugador jugador, Unidad unidad, Posicion pos) {
+        ListaSE<Posicion> libres = getPosicionesAdyacentesLibres(jugador);
+        boolean valido = false;
+        IteradorSE<Posicion> it = libres.getIterador();
+        while (it.hasNext()) {
+            Posicion p = it.next();
+            if (p.getFila() == pos.getFila() && p.getColumna() == pos.getColumna()) {
+                valido = true;
+                break;
+            }
+        }
+        if (!valido) return false;
+
+        tablero.colocarUnidad(unidad, pos.getFila(), pos.getColumna());
+        unidad.setPosicion(pos.getFila(), pos.getColumna());
+        jugador.addUnidad(unidad);
+        return true;
+    }
+    public ListaSE<Posicion> getPosicionesAdyacentesLibres(Jugador jugador) {
         ListaSE<Posicion> libres = new ListaSE<>();
 
         // Iteramos sobre la lista de unidades con su iterador

@@ -1,5 +1,8 @@
 package Unidades;
 
+import Tablero.Casilla;
+import Tablero.Tablero;
+
 public class Poeta extends Unidad{
     public Poeta(boolean esJugadorHumano) {
         super("Poeta", 5, 2, 1, 2,1, 10,5 );
@@ -12,9 +15,22 @@ public class Poeta extends Unidad{
 
     @Override
     public boolean puedeMoverA(int nuevaFila, int nuevaColumna) {
-         int dFila = Math.abs(nuevaFila - getFila());
-         int dCol = Math.abs(nuevaColumna - getColumna());
-         return dFila == dCol && dFila <= getRangomovimiento();
+        int dx = Math.abs(nuevaFila - getFila());
+        int dy = Math.abs(nuevaColumna - getColumna());
+        // Solo un paso diagonal (dx=1 y dy=1)
+        return dx == 1 && dy == 1;
+    }
+
+    @Override
+    public boolean mover(Tablero tablero, int nuevaFila, int nuevaColumna) {
+        if (!puedeMoverA(nuevaFila, nuevaColumna)) return false;
+        Casilla destino = tablero.getCasilla(nuevaFila, nuevaColumna);
+        if (destino.estaOcupada()) return false;
+        // Realizar movimiento de un paso diagonal
+        tablero.getCasilla(getFila(), getColumna()).eliminarUnidad();
+        destino.colocarUnidad(this);
+        setPosicion(nuevaFila, nuevaColumna);
+        return true;
     }
 }
 
