@@ -1,16 +1,32 @@
 package Logging;
 
-import java.time.LocalDateTime;
 
 public class LogEdge {
-    public final LogNode from, to;
-    public final String action;     // ej. "move", "attack", "spawn"
-    public final LocalDateTime when;
+    private final LogNode from;
+    private final LogNode to;
+    private final String action;
+    private final int turn;
 
-    public LogEdge(LogNode from, LogNode to, String action) {
-        this.from   = from;
-        this.to     = to;
+    public LogEdge(LogNode from, LogNode to, String action, int turn) {
+        this.from = from;
+        this.to = to;
         this.action = action;
-        this.when   = LocalDateTime.now();
+        this.turn = turn;
+    }
+
+    public LogNode getFrom() {
+        return from;
+    }
+
+    public LogNode getTo() {
+        return to;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+    public int getTurn() {
+        return turn;
     }
 }

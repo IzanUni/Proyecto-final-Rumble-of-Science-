@@ -1,30 +1,36 @@
 package Logging;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import Material.ListaSE;
+import Material.IteradorSE;
 
 public class LogGraph {
-    private final Map<String, LogNode> nodes = new HashMap<>();
-    private final List<LogEdge> edges = new java.util.ArrayList<>();
+    private final ListaSE<LogNode> nodes = new ListaSE<>();
+    private final ListaSE<LogEdge> edges = new ListaSE<>();
 
     public LogNode getOrCreateNode(String id, String label) {
-        return nodes.computeIfAbsent(id, k -> new LogNode(id, label));
+        IteradorSE<LogNode> it = nodes.getIterador();
+        while (it.hasNext()) {
+            LogNode n = it.next();
+            if (n.getId().equals(id)) {
+                return n;
+            }
+        }
+        LogNode n = new LogNode(id, label);
+        nodes.add(n);
+        return n;
     }
 
     public void addEdge(String fromId, String fromLabel,
                         String toId,   String toLabel,
-                        String action) {
+                        String action, int turn) {
         LogNode f = getOrCreateNode(fromId, fromLabel);
         LogNode t = getOrCreateNode(toId,   toLabel);
-        LogEdge e = new LogEdge(f, t, action);
+        LogEdge e = new LogEdge(f, t, action, turn);
         edges.add(e);
-        f.edges.add(e);
+        f.addEdge(e);
     }
-    public List<LogEdge> getEdges() {
-        return edges.stream()
-                .sorted((a,b) -> a.when.compareTo(b.when))
-                .collect(Collectors.toList());
+
+    public IteradorSE<LogEdge> getEdges() {
+        return edges.getIterador();
     }
 }

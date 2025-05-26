@@ -167,7 +167,7 @@ public class GameApp extends Application {
                         "U" + spawnPendiente.hashCode(), spawnPendiente.getTipo(),
                         "C_" + p.getFila() + "_" + p.getColumna(),
                         "Casilla(" + p.getFila() + "," + p.getColumna() + ")",
-                        "spawn(turn " + partida.getTurno() + ")"
+                        "spawn", partida.getTurno()
                 );
                 spawnPendiente = null;
                 tablasActualizar();
@@ -202,6 +202,12 @@ public class GameApp extends Application {
             Posicion p = new Posicion(f, c);
             if (contains(spawnPositions, p)
                     && partida.colocarUnidadNueva(actual, spawnPendiente, p)) {
+                log.addEdge(
+                        "U" + spawnPendiente.hashCode(), spawnPendiente.getTipo(),
+                        "C_" + p.getFila() + "_" + p.getColumna(),
+                        "Casilla(" + p.getFila() + "," + p.getColumna() + ")",
+                        "spawn", partida.getTurno()
+                );
                 spawnPendiente = null;
                 tablasActualizar();
             }
@@ -232,7 +238,7 @@ public class GameApp extends Application {
                     log.addEdge(
                             "U" + selectedUnit.hashCode(), selectedUnit.getTipo(),
                             "U" + cas.getUnidad().hashCode(), cas.getUnidad().getTipo(),
-                            "attack(turn " + partida.getTurno() + ")"
+                            "attack", partida.getTurno()
                     );
                     actionDone = true;
                     tablasActualizar();
@@ -249,9 +255,8 @@ public class GameApp extends Application {
                     selectedUnit.mover(tablero, f, c);
                     log.addEdge(
                             "U" + selectedUnit.hashCode(), selectedUnit.getTipo(),
-                            "C_" + f + "_" + c,
-                            "Casilla(" + f + "," + c + ")",
-                            "move(turn " + partida.getTurno() + ")"
+                            "C_" + f + "_" + c, "Casilla(" + f + "," + c + ")",
+                            "move", partida.getTurno()
                     );
                     actionDone = true;
                     tablasActualizar();
@@ -276,6 +281,7 @@ public class GameApp extends Application {
                     : "¡Victoria para " + ganador.getNombre() + "!";
             new Alert(Alert.AlertType.INFORMATION, msg)
                     .showAndWait();
+            showLogWindow();
             moveBtn.setDisable(true);
             attackBtn.setDisable(true);
             nextTurnBtn.setDisable(true);
@@ -354,21 +360,26 @@ public class GameApp extends Application {
         Stage dialog = new Stage();
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.setTitle("Log de la Partida");
-
         TextArea area = new TextArea();
         area.setEditable(false);
-
         StringBuilder sb = new StringBuilder();
-        for (LogEdge e : log.getEdges()) {
-            sb.append(e.when).append(" \u2014 ")
-                    .append(e.from.label).append(" → ").append(e.to.label)
-                    .append(" [").append(e.action).append("]\n");
+        IteradorSE<LogEdge> it = log.getEdges();
+        while (it.hasNext()) {
+            LogEdge e = it.next();
+            sb.append("Turno ")
+                    .append(e.getTurn())
+                    .append(": ")
+                    .append(e.getFrom().getLabel())
+                    .append(" -> ")
+                    .append(e.getTo().getLabel())
+                    .append(" [")
+                    .append(e.getAction())
+                    .append("]\n");
         }
         area.setText(sb.toString());
-
-        VBox root = new VBox();
-        root.setPadding(new Insets(10));
-        dialog.setScene(new Scene(root, 500, 600));
+        VBox box = new VBox();
+        box.setPadding(new Insets(10));
+        dialog.setScene(new Scene(box, 500, 600));
         dialog.showAndWait();
     }
 

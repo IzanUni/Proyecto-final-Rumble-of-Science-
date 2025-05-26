@@ -1,18 +1,31 @@
 package Logging;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import Material.ListaSE;
+import Material.IteradorSE;
 
 public class LogNode {
-    public final String id;
-    public final String label;
-    public final LocalDateTime createdAt;
-    public final List<LogEdge> edges = new ArrayList<>();
+    private final String id;
+    private final String label;
+    private final ListaSE<LogEdge> edges = new ListaSE<>();
 
     public LogNode(String id, String label) {
-        this.id        = id;
-        this.label     = label;
-        this.createdAt = LocalDateTime.now();
+        this.id = id;
+        this.label = label;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public void addEdge(LogEdge edge) {
+        edges.add(edge);
+    }
+
+    public IteradorSE<LogEdge> getEdges() {
+        return edges.getIterador();
     }
 }

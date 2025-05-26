@@ -11,7 +11,6 @@ import Tablero.Tablero;
 import Tablero.Casilla;
 import Material.ListaSE;
 
-import java.util.function.BiConsumer;
 
 public class TableroView extends GridPane {
     private CellClickListener cellClickListener;
