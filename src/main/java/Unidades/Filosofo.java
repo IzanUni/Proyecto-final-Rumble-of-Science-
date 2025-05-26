@@ -2,7 +2,7 @@ package Unidades;
 
 public class Filosofo extends Unidad {
     public Filosofo(boolean esJugadorHumano) {
-        super("Filosofo", 10, 1, 2, 1, 1,9, 5);
+        super("Filosofo", 10, 1, 2, 1, 1,9, 5,esJugadorHumano);
     }
 
     @Override

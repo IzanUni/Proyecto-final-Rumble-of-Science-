@@ -14,7 +14,7 @@ public abstract class Unidad {
 
     protected boolean esJugadorHumano;
 
-    public Unidad(String nombre, int hp, int ataque, int defensa, int rangoataque,int rangomovimiento, int fila, int columna){
+    public Unidad(String nombre, int hp, int ataque, int defensa, int rangoataque,int rangomovimiento, int fila, int columna, boolean esJugadorHumano) {
         this.nombre = nombre;
         this.hp = hp;
         this.ataque = ataque;
@@ -23,6 +23,7 @@ public abstract class Unidad {
         this.fila = fila;
         this.columna = columna;
         this.rangomovimiento = rangomovimiento;
+        this.esJugadorHumano = esJugadorHumano;
     }
     public int getAtaque() {
         return ataque;
@@ -112,6 +113,8 @@ public abstract class Unidad {
     }
 
     public boolean puedeAtacarA(int objetivoFila, int objetivoColumna) {
-        return calcularDistancia(objetivoFila, objetivoColumna) <= getRangoataque();
+            int dx = Math.abs(objetivoFila     - this.fila);
+            int dy = Math.abs(objetivoColumna  - this.columna);
+            return Math.max(dx, dy) <= this.rangoataque;
     }
 }

@@ -5,7 +5,7 @@ import Tablero.Tablero;
 
 public class Ingeniero extends Unidad{
     public Ingeniero(boolean esJugadorHumano){
-        super("Ingeniero", 5, 2, 1, 2,1, 1, 5);
+        super("Ingeniero", 7, 2, 1, 2,1, 1, 5, esJugadorHumano);
     }
     @Override
     public String getTipo() {

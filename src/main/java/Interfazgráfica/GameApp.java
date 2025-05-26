@@ -149,25 +149,25 @@ public class GameApp extends Application {
             if (cas.estaOcupada() && cas.getUnidad().esJugadorHumano() == actual.esHumano()) {
                 selectedUnit = cas.getUnidad();
                 showStats(selectedUnit);
-                moveBtn.setDisable(false);
-                attackBtn.setDisable(false);
+                ListaSE<Posicion> moves = getMovimientoPosiciones(selectedUnit);
+                ListaSE<Posicion> attacks = getAtaquePosiciones(selectedUnit);
+                tableroView.resaltar(moves);
+                tableroView.resaltar(attacks);
             }
             return;
         }
-        if (actionMode == ActionMode.MOVE) {
-            if (selectedUnit.mover(tablero, fila, columna)) {
+        if (cas.estaOcupada() && cas.getUnidad().esJugadorHumano() != selectedUnit.esJugadorHumano()) {
+            if (selectedUnit.puedeAtacarA(fila, columna)) {
+                selectedUnit.atacar(tablero, fila, columna);
                 actionDone = true;
             }
-        } else if (actionMode == ActionMode.ATTACK) {
-            if (selectedUnit.atacar(tablero, fila, columna)) {
+        } else {
+            if (!cas.estaOcupada() && selectedUnit.puedeMoverA(fila, columna)) {
+                selectedUnit.mover(tablero, fila, columna);
                 actionDone = true;
             }
         }
-
         selectedUnit = null;
-        actionMode = ActionMode.NONE;
-        moveBtn.setDisable(true);
-        attackBtn.setDisable(true);
         tableroView.limpiarResaltados();
         tableroView.refrescar();
     }
