@@ -2,22 +2,16 @@ package Tablero;
 import Unidades.Unidad;
 public class Casilla {
     private int modificadorDefensa;
-    private int modificadorAtaque;
     private Unidad unidad;
 
     public Casilla(int modificadorDefensa, int modificadorAtaque) {
         this.modificadorDefensa = modificadorDefensa;
-        this.modificadorAtaque = modificadorAtaque;
         this.unidad = null;
     }
 
 
     public int getModificadorDefensa() {
         return modificadorDefensa;
-    }
-
-    public int getModificadorAtaque() {
-        return modificadorAtaque;
     }
 
     public boolean estaOcupada(){

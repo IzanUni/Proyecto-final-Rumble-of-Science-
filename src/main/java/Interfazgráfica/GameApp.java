@@ -4,6 +4,9 @@ import Aplicacion.Faccion;
 import Aplicacion.Jugador;
 import Aplicacion.Partida;
 import Aplicacion.Posicion;
+import Excepciones.InvalidMoveException;
+import Excepciones.invalidAttackException;
+import IA.IAController;
 import Material.ListaSE;
 import Material.IteradorSE;
 import Tablero.Tablero;
@@ -34,7 +37,6 @@ public class GameApp extends Application {
     private TableroView tableroView;
     private Unidad spawnPendiente;
     private ListaSE<Posicion> spawnPositions = new ListaSE<>();
-    private boolean spawnPhase = false;
     private Unidad selectedUnit;
     private boolean actionDone;
     private ActionMode actionMode = ActionMode.NONE;
@@ -47,6 +49,7 @@ public class GameApp extends Application {
     private Button nextTurnBtn;
     private enum ActionMode { NONE, MOVE, ATTACK }
     private VBox sidePanel;
+    private IAController iaController;
 
     @Override
     public void start(Stage primaryStage) {
@@ -56,6 +59,8 @@ public class GameApp extends Application {
         Jugador j2 = new Jugador ("Jugador 2",false, Faccion.LETRAS);
         partida = new Partida(tablero, j1, j2, spawnInterval);
         partida.iniciarPartida();
+        iaController = new IAController(partida, tablero);
+
         tableroView = new TableroView(tablero);
         tableroView.setCellClickListener(new CellClickListener() {
             @Override
@@ -82,13 +87,13 @@ public class GameApp extends Application {
         sidePanel.getChildren().add(new Label("-- Unidades --"));
         ScrollPane scroll = new ScrollPane(sidePanel);
         scroll.setFitToWidth(true);
-        scroll.setPrefWidth(200);
+        scroll.setPrefWidth(180);
         BorderPane root = new BorderPane();
         root.setCenter(tableroView);
         root.setBottom(actionBox);
         root.setRight(scroll);
 
-        Scene scene = new Scene(root,800,700);
+        Scene scene = new Scene(root,900,700);
         primaryStage.setTitle("Rumble of Science");
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -111,37 +116,58 @@ public class GameApp extends Application {
         }
     }
     private void handleNextTurn() {
-        if (spawnPhase) {
-            spawnPhase = false;
-            partida.nextTurn();
-            tablasActualizar();
+        if (spawnPendiente != null) {
+            new Alert(AlertType.WARNING,
+                    "Debes colocar primero la unidad generada antes de pasar turno.")
+                    .showAndWait();
             return;
         }
 
-        actionDone     = false;
-        selectedUnit   = null;
-        actionMode     = ActionMode.NONE;
+        actionDone = false;
+        selectedUnit = null;
+        actionMode = ActionMode.NONE;
         moveBtn.setDisable(true);
         attackBtn.setDisable(true);
-        spawnPendiente = null;
         spawnPositions = new ListaSE<>();
         tableroView.limpiarResaltados();
 
         partida.nextTurn();
         tablasActualizar();
 
+        Jugador actual = partida.getJugadorActual();
         int total = countUnits();
+
         if (partida.getTurno() % spawnInterval == 0 && total < 8) {
-            Jugador actual = partida.getJugadorActual();
             spawnPendiente = generarUnidadActual(actual);
             spawnPositions = partida.getPosicionesAdyacentesLibres(actual);
-            tableroView.resaltar(spawnPositions);
 
-            new Alert(AlertType.INFORMATION,
-                    "Spawn: nueva unidad " + spawnPendiente.getTipo() +
-                            ".\nHaz clic en casilla resaltada para colocarla.")
-                    .showAndWait();
-            spawnPhase = true;
+            if (actual.esHumano()) {
+                tableroView.resaltar(spawnPositions);
+                new Alert(AlertType.INFORMATION,
+                        "Spawn: nueva unidad " + spawnPendiente.getTipo() +
+                                ". Selecciona casilla resaltada para colocarla.")
+                        .showAndWait();
+                return;
+            } else {
+                int cnt = spawnPositions.getNumElementos();
+                int idx = rnd.nextInt(cnt);
+                IteradorSE<Posicion> it = spawnPositions.getIterador();
+                Posicion p = null;
+                for (int i = 0; i <= idx; i++) {
+                    p = it.next();
+                }
+                partida.colocarUnidadNueva(actual, spawnPendiente, p);
+                spawnPendiente = null;
+                tablasActualizar();
+                return;
+            }
+        }
+
+        if (!actual.esHumano()) {
+            iaController.ejecutarTurnoIA();
+            tablasActualizar();
+            partida.nextTurn();
+            tablasActualizar();
         }
     }
     private Unidad generarUnidadActual(Jugador j) {
@@ -164,7 +190,6 @@ public class GameApp extends Application {
             Posicion p = new Posicion(f, c);
             if (contains(spawnPositions, p)
                     && partida.colocarUnidadNueva(actual, spawnPendiente, p)) {
-                actionDone     = true;
                 spawnPendiente = null;
                 tablasActualizar();
             }
@@ -190,14 +215,26 @@ public class GameApp extends Application {
                     && cas.getUnidad().esJugadorHumano() != selectedUnit.esJugadorHumano()
                     && selectedUnit.puedeAtacarA(f, c)) {
                 showStats(cas.getUnidad());
-                selectedUnit.atacar(tablero, f, c);
+                try {
+                    selectedUnit.atacar(tablero, f, c);
+                    actionDone = true;
+                    tablasActualizar();
+                } catch (invalidAttackException ex) {
+                    new Alert(Alert.AlertType.ERROR, ex.getMessage()).showAndWait();
+                }
                 actionDone = true;
                 tablasActualizar();
             }
             else if (actionMode == ActionMode.MOVE
                     && !cas.estaOcupada()
                     && selectedUnit.puedeMoverA(f, c)) {
-                selectedUnit.mover(tablero, f, c);
+                try {
+                    selectedUnit.mover(tablero, f, c);
+                    actionDone = true;
+                    tablasActualizar();
+                } catch (InvalidMoveException ex) {
+                    new Alert(Alert.AlertType.ERROR, ex.getMessage()).showAndWait();
+                }
                 actionDone = true;
                 tablasActualizar();
             }
@@ -205,6 +242,20 @@ public class GameApp extends Application {
             actionMode   = ActionMode.NONE;
             moveBtn.setDisable(true);
             attackBtn.setDisable(true);
+        }
+        tableroView.refrescar();
+        updateSidePanel();
+
+        if (partida.finPartida()) {
+            Jugador ganador = partida.getGanador();
+            String msg = ganador == null
+                    ? "¡Empate!"
+                    : "¡Victoria para " + ganador.getNombre() + "!";
+            new Alert(Alert.AlertType.INFORMATION, msg)
+                    .showAndWait();
+            moveBtn.setDisable(true);
+            attackBtn.setDisable(true);
+            nextTurnBtn.setDisable(true);
         }
     }
 

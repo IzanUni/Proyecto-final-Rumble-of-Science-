@@ -1,4 +1,6 @@
 package Unidades;
+import Excepciones.InvalidMoveException;
+import Excepciones.invalidAttackException;
 import Tablero.Tablero;
 import Tablero.Casilla;
 public abstract class Unidad {
@@ -80,12 +82,16 @@ public abstract class Unidad {
     }
 
     public boolean mover(Tablero tablero, int nuevaFila, int nuevaColumna) {
-        if (!puedeMoverA(nuevaFila, nuevaColumna)) return false;
+        if (nuevaFila < 0 || nuevaFila >= tablero.getFilas()
+                || nuevaColumna < 0 || nuevaColumna >= tablero.getColumnas()) {
+            throw new InvalidMoveException("Posición fuera del tablero: " + nuevaFila + "," + nuevaColumna);
+        }
+        if (!puedeMoverA(nuevaFila, nuevaColumna))  throw new InvalidMoveException("Movimiento no permitido a (" + nuevaFila + "," + nuevaColumna + ")");;
 
         Casilla destino = tablero.getCasilla(nuevaFila, nuevaColumna);
-        if (destino.estaOcupada()) {return false;}
+        if (destino.estaOcupada()) { throw new InvalidMoveException("Casilla ocupada en (" + nuevaFila + "," + nuevaColumna + ")");}
         int distancia = calcularDistancia(nuevaFila, nuevaColumna);
-        if(distancia > rangomovimiento){return false;}
+        if(distancia > rangomovimiento){ throw new InvalidMoveException("Movimiento no permitido a (" + nuevaFila + "," + nuevaColumna + ")");}
         tablero.getCasilla(this.fila, this.columna).eliminarUnidad();
         destino.colocarUnidad(this);
         setPosicion(nuevaFila, nuevaColumna);
@@ -94,13 +100,17 @@ public abstract class Unidad {
     public abstract boolean puedeMoverA(int nuevaFila, int nuevaColumna);
 
     public boolean atacar(Tablero tablero, int objetivoFila, int objetivoColumna) {
-        if (!puedeAtacarA(objetivoFila, objetivoColumna)) return false;
+        if (objetivoFila < 0 || objetivoFila >= tablero.getFilas()
+                || objetivoColumna < 0 || objetivoColumna >= tablero.getColumnas()) {
+            throw new invalidAttackException("Objetivo fuera del tablero: " + objetivoFila + "," + objetivoColumna);
+        }
+        if (!puedeAtacarA(objetivoFila, objetivoColumna))throw new invalidAttackException("Fuera de rango de ataque: (" + objetivoFila + "," + objetivoColumna + ")");;
 
         Casilla objetivo = tablero.getCasilla(objetivoFila, objetivoColumna);
-        if (!objetivo.estaOcupada()) return false;
+        if (!objetivo.estaOcupada()) throw new invalidAttackException("No hay objetivo en la casilla (" + objetivoFila + "," + objetivoColumna + ")");;
 
         Unidad enemigo = objetivo.getUnidad();
-        if (enemigo.esJugadorHumano == this.esJugadorHumano) return false;
+        if (enemigo.esJugadorHumano == this.esJugadorHumano) throw new invalidAttackException("No puedes atacar a un aliado.");;
 
         int damage = Math.max(0, this.ataque - enemigo.defensa);
         enemigo.recibirDamage(damage);

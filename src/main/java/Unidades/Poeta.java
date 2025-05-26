@@ -17,7 +17,6 @@ public class Poeta extends Unidad{
     public boolean puedeMoverA(int nuevaFila, int nuevaColumna) {
         int dx = Math.abs(nuevaFila - getFila());
         int dy = Math.abs(nuevaColumna - getColumna());
-        // Solo un paso diagonal (dx=1 y dy=1)
         return dx == 1 && dy == 1;
     }
 
@@ -26,7 +25,6 @@ public class Poeta extends Unidad{
         if (!puedeMoverA(nuevaFila, nuevaColumna)) return false;
         Casilla destino = tablero.getCasilla(nuevaFila, nuevaColumna);
         if (destino.estaOcupada()) return false;
-        // Realizar movimiento de un paso diagonal
         tablero.getCasilla(getFila(), getColumna()).eliminarUnidad();
         destino.colocarUnidad(this);
         setPosicion(nuevaFila, nuevaColumna);

@@ -113,35 +113,31 @@ public class Partida {
     public ListaSE<Posicion> getPosicionesAdyacentesLibres(Jugador jugador) {
         ListaSE<Posicion> libres = new ListaSE<>();
 
-        // Iteramos sobre la lista de unidades con su iterador
+
         IteradorSE<Unidad> itUnidades = jugador.getUnidades().getIterador();
         while (itUnidades.hasNext()) {
             Unidad u = itUnidades.next();
             int f = u.getFila();
             int c = u.getColumna();
 
-            // Arriba
             if (f > 0 && !tablero.getCasilla(f - 1, c).estaOcupada()) {
                 Posicion pos = new Posicion(f - 1, c);
                 if (!contiene(libres, pos)) {
                     libres.add(pos);
                 }
             }
-            // Abajo
             if (f < tablero.getFilas() - 1 && !tablero.getCasilla(f + 1, c).estaOcupada()) {
                 Posicion pos = new Posicion(f + 1, c);
                 if (!contiene(libres, pos)) {
                     libres.add(pos);
                 }
             }
-            // Izquierda
             if (c > 0 && !tablero.getCasilla(f, c - 1).estaOcupada()) {
                 Posicion pos = new Posicion(f, c - 1);
                 if (!contiene(libres, pos)) {
                     libres.add(pos);
                 }
             }
-            // Derecha
             if (c < tablero.getColumnas() - 1 && !tablero.getCasilla(f, c + 1).estaOcupada()) {
                 Posicion pos = new Posicion(f, c + 1);
                 if (!contiene(libres, pos)) {
@@ -163,5 +159,19 @@ public class Partida {
         }
         return false;
     }
+
+    public boolean finPartida() {
+        return jugador1.getUnidades().getNumElementos() == 0
+                || jugador2.getUnidades().getNumElementos() == 0;
+    }
+
+    public Jugador getGanador() {
+        int n1 = jugador1.getUnidades().getNumElementos();
+        int n2 = jugador2.getUnidades().getNumElementos();
+        if (n1 == 0 && n2 == 0) return null;
+        if (n1 == 0)        return jugador2;
+        return null;
+    }
+
 
 }
