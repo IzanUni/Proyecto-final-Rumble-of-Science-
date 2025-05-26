@@ -7,6 +7,7 @@ import Aplicacion.Posicion;
 import Excepciones.InvalidMoveException;
 import Excepciones.invalidAttackException;
 import IA.IAController;
+import Logging.LogEdge;
 import Material.ListaSE;
 import Material.IteradorSE;
 import Tablero.Tablero;
@@ -25,11 +26,14 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import java.util.Random;
 
+import java.awt.*;
+import java.util.Random;
+import Logging.LogGraph;
 
 public class GameApp extends Application {
     private Tablero tablero;
@@ -50,6 +54,7 @@ public class GameApp extends Application {
     private enum ActionMode { NONE, MOVE, ATTACK }
     private VBox sidePanel;
     private IAController iaController;
+    private final LogGraph log = new LogGraph();
 
     @Override
     public void start(Stage primaryStage) {
@@ -141,6 +146,7 @@ public class GameApp extends Application {
             spawnPendiente = generarUnidadActual(actual);
             spawnPositions = partida.getPosicionesAdyacentesLibres(actual);
 
+
             if (actual.esHumano()) {
                 tableroView.resaltar(spawnPositions);
                 new Alert(AlertType.INFORMATION,
@@ -157,6 +163,12 @@ public class GameApp extends Application {
                     p = it.next();
                 }
                 partida.colocarUnidadNueva(actual, spawnPendiente, p);
+                log.addEdge(
+                        "U" + spawnPendiente.hashCode(), spawnPendiente.getTipo(),
+                        "C_" + p.getFila() + "_" + p.getColumna(),
+                        "Casilla(" + p.getFila() + "," + p.getColumna() + ")",
+                        "spawn(turn " + partida.getTurno() + ")"
+                );
                 spawnPendiente = null;
                 tablasActualizar();
                 return;
@@ -217,6 +229,11 @@ public class GameApp extends Application {
                 showStats(cas.getUnidad());
                 try {
                     selectedUnit.atacar(tablero, f, c);
+                    log.addEdge(
+                            "U" + selectedUnit.hashCode(), selectedUnit.getTipo(),
+                            "U" + cas.getUnidad().hashCode(), cas.getUnidad().getTipo(),
+                            "attack(turn " + partida.getTurno() + ")"
+                    );
                     actionDone = true;
                     tablasActualizar();
                 } catch (invalidAttackException ex) {
@@ -230,6 +247,12 @@ public class GameApp extends Application {
                     && selectedUnit.puedeMoverA(f, c)) {
                 try {
                     selectedUnit.mover(tablero, f, c);
+                    log.addEdge(
+                            "U" + selectedUnit.hashCode(), selectedUnit.getTipo(),
+                            "C_" + f + "_" + c,
+                            "Casilla(" + f + "," + c + ")",
+                            "move(turn " + partida.getTurno() + ")"
+                    );
                     actionDone = true;
                     tablasActualizar();
                 } catch (InvalidMoveException ex) {
@@ -256,6 +279,7 @@ public class GameApp extends Application {
             moveBtn.setDisable(true);
             attackBtn.setDisable(true);
             nextTurnBtn.setDisable(true);
+            showLogWindow();
         }
     }
 
@@ -324,6 +348,28 @@ public class GameApp extends Application {
                 "HP: %d\nAtaque: %d\nDefensa: %d",
                 u.getHp(), u.getAtaque(), u.getDefensa()));
         stats.showAndWait();
+    }
+
+    private void showLogWindow() {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.setTitle("Log de la Partida");
+
+        TextArea area = new TextArea();
+        area.setEditable(false);
+
+        StringBuilder sb = new StringBuilder();
+        for (LogEdge e : log.getEdges()) {
+            sb.append(e.when).append(" \u2014 ")
+                    .append(e.from.label).append(" → ").append(e.to.label)
+                    .append(" [").append(e.action).append("]\n");
+        }
+        area.setText(sb.toString());
+
+        VBox root = new VBox();
+        root.setPadding(new Insets(10));
+        dialog.setScene(new Scene(root, 500, 600));
+        dialog.showAndWait();
     }
 
     public static void main(String[] args) {
